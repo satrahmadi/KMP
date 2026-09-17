@@ -8,8 +8,18 @@ export class ApiError extends Error {
   }
 }
 
+const BASE_PATH = "/kmp";
+
+function withBasePath(url: string) {
+  if (!url.startsWith("/") || url === BASE_PATH || url.startsWith(`${BASE_PATH}/`)) {
+    return url;
+  }
+
+  return `${BASE_PATH}${url}`;
+}
+
 export async function apiFetch<T = unknown>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const res = await fetch(withBasePath(url), {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
