@@ -65,7 +65,8 @@ export async function issueOtp(email: string, purpose: OtpPurpose, userId?: stri
     text: `Kode OTP Anda: ${code}. Berlaku ${OTP_TTL_MINUTES} menit.`,
   });
 
-  return { devCode: process.env.NODE_ENV !== "production" ? code : undefined };
+  const showCode = process.env.NODE_ENV !== "production" || process.env.SHOW_DEV_OTP === "true";
+  return { devCode: showCode ? code : undefined };
 }
 
 export type OtpVerifyResult =
