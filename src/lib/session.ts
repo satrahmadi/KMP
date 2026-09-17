@@ -23,9 +23,14 @@ export async function createSession(userId: string) {
     .sign(secretKey());
 
   const store = await cookies();
+  const secureCookie =
+    process.env.SESSION_COOKIE_SECURE !== undefined
+      ? process.env.SESSION_COOKIE_SECURE === "true"
+      : process.env.NODE_ENV === "production";
+
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie,
     sameSite: "lax",
     path: "/",
     expires: expiresAt,
