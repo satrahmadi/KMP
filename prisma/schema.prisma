@@ -1,0 +1,385 @@
+// Data model per PRD-Auth-Company-TeamManagement.md §8
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  unverified
+  active
+  suspended
+}
+
+enum CompanyStatus {
+  active
+  suspended
+}
+
+enum MemberStatus {
+  active
+  removed
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+enum OtpPurpose {
+  registration
+  login_verification
+  password_reset
+}
+
+enum RoleType {
+  system
+  custom
+}
+
+enum ProjectStatus {
+  active
+  archived
+}
+
+enum FinanceRecordType {
+  proposal
+  grant
+  funding_note
+  invoice
+  other
+}
+
+enum DonorCategory {
+  multilateral
+  bilateral
+  foundation
+  corporate
+  government
+  other
+}
+
+enum ProgramCategory {
+  education
+  health
+  economic_development
+  governance
+  environment
+  humanitarian
+  other
+}
+
+model User {
+  id              String     @id @default(cuid())
+  name            String
+  email           String     @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  status          UserStatus @default(unverified)
+  isSuperadmin    Boolean    @default(false)
+  createdById     String?
+  createdBy       User?      @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers    User[]     @relation("UserCreatedBy")
+  lastActiveCompanyId String?
+  createdAt       DateTime   @default(now())
+
+  memberships       CompanyMember[]
+  companiesCreated  Company[]       @relation("CompanyCreatedBy")
+  invitationsSent   Invitation[]    @relation("InvitationInvitedBy")
+  sessions          Session[]
+  auditLogsActed    AuditLog[]      @relation("AuditActor")
+  companiesSuspended Company[]      @relation("CompanySuspendedBy")
+  projectsCreated   Project[]
+  financeRecordsCreated FinanceRecord[]
+  donorsCreated          Donor[]
+  donorAgreementsCreated DonorAgreement[]
+  currenciesCreated      Currency[]
+  exchangeRatesCreated   ExchangeRate[]
+  programsCreated        Program[]
+}
+
+model Company {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  createdById  String
+  createdBy    User          @relation("CompanyCreatedBy", fields: [createdById], references: [id])
+  status       CompanyStatus @default(active)
+  suspendedAt  DateTime?
+  suspendedById String?
+  suspendedBy  User?         @relation("CompanySuspendedBy", fields: [suspendedById], references: [id])
+  projectSeq   Int           @default(0)
+  createdAt    DateTime      @default(now())
+
+  members     CompanyMember[]
+  invitations Invitation[]
+  roles       Role[]
+  auditLogs   AuditLog[]
+  projects    Project[]
+  donors      Donor[]
+  currencies  Currency[]
+  programs    Program[]
+  programCodeSeqs ProgramCodeSeq[]
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id])
+  code        String
+  name        String
+  slug        String
+  description String?
+  costCenter     String?
+  classification String?
+  status      ProjectStatus @default(active)
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  financeRecords FinanceRecord[]
+
+  @@unique([companyId, slug])
+  @@unique([companyId, code])
+}
+
+model Donor {
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id])
+  name        String
+  category    DonorCategory @default(other)
+  notes       String?
+  status      ProjectStatus @default(active)
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  contacts       DonorContact[]
+  agreements     DonorAgreement[]
+  financeRecords FinanceRecord[]
+
+  @@unique([companyId, name])
+}
+
+model DonorContact {
+  id        String   @id @default(cuid())
+  donorId   String
+  donor     Donor    @relation(fields: [donorId], references: [id])
+  name      String
+  email     String?
+  phone     String?
+  position  String?
+  createdAt DateTime @default(now())
+}
+
+model DonorAgreement {
+  id           String        @id @default(cuid())
+  donorId      String
+  donor        Donor         @relation(fields: [donorId], references: [id])
+  title        String
+  amount       Float?
+  currency     String        @default("IDR")
+  startDate    DateTime?
+  endDate      DateTime?
+  referenceUrl String?
+  description  String?
+  status       ProjectStatus @default(active)
+  createdById  String
+  createdBy    User          @relation(fields: [createdById], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Currency {
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id])
+  code        String
+  name        String
+  symbol      String?
+  isBase      Boolean       @default(false)
+  status      ProjectStatus @default(active)
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  rates ExchangeRate[]
+
+  @@unique([companyId, code])
+}
+
+model ExchangeRate {
+  id            String   @id @default(cuid())
+  currencyId    String
+  currency      Currency @relation(fields: [currencyId], references: [id])
+  rate          Float
+  effectiveDate DateTime
+  createdById   String
+  createdBy     User     @relation(fields: [createdById], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model Program {
+  id          String          @id @default(cuid())
+  companyId   String
+  company     Company         @relation(fields: [companyId], references: [id])
+  code        String
+  name        String
+  category    ProgramCategory
+  type        String?
+  description String?
+  status      ProjectStatus   @default(active)
+  createdById String
+  createdBy   User            @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([companyId, code])
+}
+
+/** Atomic per-Company/Category/Year counter backing Program.code (mirrors Company.projectSeq for Project). */
+model ProgramCodeSeq {
+  id        String          @id @default(cuid())
+  companyId String
+  company   Company         @relation(fields: [companyId], references: [id])
+  category  ProgramCategory
+  year      Int
+  seq       Int             @default(0)
+
+  @@unique([companyId, category, year])
+}
+
+model FinanceRecord {
+  id           String            @id @default(cuid())
+  projectId    String
+  project      Project           @relation(fields: [projectId], references: [id])
+  type         FinanceRecordType
+  title        String
+  donorId      String?
+  donor        Donor?            @relation(fields: [donorId], references: [id])
+  amount       Float?
+  currency     String            @default("IDR")
+  recordDate   DateTime?
+  periodStart  DateTime?
+  periodEnd    DateTime?
+  invoiceNumber String?
+  dueDate      DateTime?
+  description  String?
+  referenceUrl String?
+  status       ProjectStatus     @default(active)
+  createdById  String
+  createdBy    User              @relation(fields: [createdById], references: [id])
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model CompanyMember {
+  id         String       @id @default(cuid())
+  companyId  String
+  company    Company      @relation(fields: [companyId], references: [id])
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  roleId     String
+  role       Role         @relation(fields: [roleId], references: [id])
+  status     MemberStatus @default(active)
+  invitedBy  String?
+  joinedAt   DateTime     @default(now())
+
+  @@unique([companyId, userId])
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id])
+  email       String
+  roleId      String
+  role        Role             @relation(fields: [roleId], references: [id])
+  token       String           @unique
+  invitedById String
+  invitedBy   User             @relation("InvitationInvitedBy", fields: [invitedById], references: [id])
+  status      InvitationStatus @default(pending)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+}
+
+model Otp {
+  id          String     @id @default(cuid())
+  userId      String?
+  email       String
+  codeHash    String
+  purpose     OtpPurpose
+  expiresAt   DateTime
+  attemptCount Int       @default(0)
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  name        String
+  description String?
+  type        RoleType
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  members     CompanyMember[]
+  invitations Invitation[]
+
+  @@unique([companyId, name])
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  module      String
+  action      String
+  key         String @unique
+  label       String
+  description String
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  companyId String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+  actorId    String?
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  metadata   String?
+  createdAt  DateTime @default(now())
+}
