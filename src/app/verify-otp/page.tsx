@@ -19,7 +19,7 @@ export default async function VerifyOtpPage({
       title="Verifikasi email"
       description={`Masukkan kode 6 digit yang dikirim ke ${email}.`}
       footer={
-        <a href="/register" className="font-medium text-ink underline underline-offset-2">
+        <a href="/kmp/register" className="font-medium text-ink underline underline-offset-2">
           Kembali ke pendaftaran
         </a>
       }

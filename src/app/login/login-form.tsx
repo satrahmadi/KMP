@@ -59,7 +59,7 @@ export function LoginForm({ next }: { next?: string }) {
           <Label htmlFor="password" className="mb-0">
             Password
           </Label>
-          <a href="/forgot-password" className="text-[13px] font-medium text-ink-muted hover:text-ink">
+          <a href="/kmp/forgot-password" className="text-[13px] font-medium text-ink-muted hover:text-ink">
             Lupa password?
           </a>
         </div>

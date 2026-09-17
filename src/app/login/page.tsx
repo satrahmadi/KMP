@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       footer={
         <>
           Belum punya akun?{" "}
-          <a href="/register" className="font-medium text-ink underline underline-offset-2">
+          <a href="/kmp/register" className="font-medium text-ink underline underline-offset-2">
             Daftar
           </a>
         </>

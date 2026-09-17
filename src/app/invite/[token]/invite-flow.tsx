@@ -109,7 +109,7 @@ export function InviteFlow({ token }: { token: string }) {
         <p className="text-[13px] text-ink-muted">
           {error ?? "Undangan ini sudah tidak berlaku (kedaluwarsa, dibatalkan, atau sudah digunakan)."}
         </p>
-        <a href="/login" className="mt-4 text-[13px] font-medium text-ink underline underline-offset-2">
+        <a href="/kmp/login" className="mt-4 text-[13px] font-medium text-ink underline underline-offset-2">
           Ke halaman login
         </a>
       </div>
@@ -158,7 +158,7 @@ export function InviteFlow({ token }: { token: string }) {
           <span className="font-medium text-ink">{info?.roleName}</span>. Akun untuk {info?.email} sudah terdaftar —
           silakan login untuk bergabung.
         </p>
-        <a href={`/login?next=${encodeURIComponent(`/invite/${token}`)}`}>
+        <a href={`/kmp/login?next=${encodeURIComponent(`/invite/${token}`)}`}>
           <Button className="mt-4 w-full">Login untuk bergabung</Button>
         </a>
       </div>

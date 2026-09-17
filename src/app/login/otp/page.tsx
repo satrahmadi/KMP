@@ -18,7 +18,7 @@ export default async function LoginOtpPage({
       title="Verifikasi login"
       description={`Masukkan kode 6 digit yang dikirim ke ${email}.`}
       footer={
-        <a href="/login" className="font-medium text-ink underline underline-offset-2">
+        <a href="/kmp/login" className="font-medium text-ink underline underline-offset-2">
           Kembali ke login
         </a>
       }

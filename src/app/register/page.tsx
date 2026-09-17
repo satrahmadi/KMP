@@ -14,7 +14,7 @@ export default async function RegisterPage() {
       footer={
         <>
           Sudah punya akun?{" "}
-          <a href="/login" className="font-medium text-ink underline underline-offset-2">
+          <a href="/kmp/login" className="font-medium text-ink underline underline-offset-2">
             Masuk
           </a>
         </>
